@@ -1,0 +1,25 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Copy into Vagrantfile.local and modify
+
+# Add "192.168.56.6 $DOMAIN phpmyadmin.$DOMAIN" to your host /etc/hosts
+DOMAIN = 'localhost.loc'
+TIMEZONE = 'America/Los_Angeles'
+
+# MySQL
+# Due to MySQL limitations, up to 16 characters here, more will get truncated
+MYSQL_DBNAME = 'magento2'
+MYSQL_USER = 'magento2'
+MYSQL_PASSWORD = 'magento2'
+
+# Magento
+MAGENTO_INSTALL = 'Y'
+MAGENTO_TIMEZONE = 'America/Los_Angeles'
+MAGENTO_LANGUAGE = 'en_US'
+MAGENTO_CURRENCY = 'USD'
+MAGENTO_SAMPLE_DATA = 'Y'
+
+# Composer auth (required if MAGENTO_INSTALL == 'Y')
+AUTH_NAME = ''
+AUTH_PASSWORD = ''
