@@ -1,0 +1,39 @@
+upstream fastcgi_backend {
+    server unix:/var/run/php5-fpm-vagrant.sock;
+    keepalive 16;
+}
+
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+
+    server_name {{DOMAIN}};
+
+    set $MAGE_ROOT /home/vagrant/public_html;
+    set $MAGE_MODE developer;
+
+    error_log /var/log/nginx/vagrant.error.log;
+    access_log /var/log/nginx/vagrant.access.log;
+
+    # Include main logic
+    include "/home/vagrant/public_html/nginx.conf.sample";
+}
+
+server {
+    listen 443;
+    listen [::]:443;
+
+    server_name {{DOMAIN}};
+
+    set $MAGE_ROOT /home/vagrant/public_html;
+    set $MAGE_MODE developer;
+
+    error_log /var/log/nginx/vagrant.443.error.log;
+    access_log /var/log/nginx/vagrant.443.access.log;
+
+    # Include SSL logic
+    include "snippets/vagrant-ssl.inc";
+
+    # Include main logic
+    include "/home/vagrant/public_html/nginx.conf.sample";
+}
