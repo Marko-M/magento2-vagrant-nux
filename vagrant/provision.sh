@@ -153,6 +153,9 @@ echo "RUN=yes" >> /etc/default/cachefilesd
 # Add www-data user to vagrant group (support restrictive document root permission schemes - yes, Magento 2, you!)
 adduser www-data vagrant
 
+# Start Nginx on boot
+update-rc.d nginx defaults
+
 # Restart services
 service cachefilesd restart
 service php5-fpm restart
