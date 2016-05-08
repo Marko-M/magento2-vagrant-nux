@@ -124,7 +124,7 @@ Vagrant.configure(2) do |config|
             MYSQL_DBNAME,       #2
             MYSQL_USER,         #3
             MYSQL_PASSWORD,     #4
-            TIMEZONE,       #5
+            TIMEZONE,           #5
         ]
     end
 

@@ -1,6 +1,9 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+# https://github.com/Marko-M/magento2-vagrant-nux
+# Marko Martinović (http://www.techytalk.info)
+
 # Copy into Vagrantfile.local and modify
 
 # Add "192.168.56.6 $DOMAIN phpmyadmin.$DOMAIN" to your host /etc/hosts
