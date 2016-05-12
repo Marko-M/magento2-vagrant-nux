@@ -3,6 +3,12 @@ upstream fastcgi_backend {
     keepalive 16;
 }
 
+# Vagrant - support HTTPS behind reverse proxy
+map $http_x_forwarded_proto $fastcgi_https {
+    default $https;
+    https on;
+}
+
 server {
     listen 80 default_server;
     listen [::]:80 default_server;
@@ -16,7 +22,7 @@ server {
     access_log /var/log/nginx/vagrant.access.log;
 
     # Include main logic
-    include "/home/vagrant/public_html/nginx.conf.sample";
+    include "snippets/vagrant-main.conf";
 }
 
 server {
@@ -32,8 +38,8 @@ server {
     access_log /var/log/nginx/vagrant.443.access.log;
 
     # Include SSL logic
-    include "snippets/vagrant-ssl.inc";
+    include "snippets/vagrant-ssl.conf";
 
     # Include main logic
-    include "/home/vagrant/public_html/nginx.conf.sample";
+    include "snippets/vagrant-main.conf";
 }

@@ -1,20 +1,20 @@
 #!/bin/bash
 
-DOMAIN=$1
-MYSQL_DBNAME=$2
-MYSQL_USER=$3
-MYSQL_PASSWORD=$4
-TIMEZONE=$5
+DOMAIN=${1}
+MYSQL_DBNAME=${2}
+MYSQL_USER=${3}
+MYSQL_PASSWORD=${4}
+TIMEZONE=${5}
+VARNISH=${6}
+
+# Internal variables
+PAGE_CACHE_CONFIG=''
 
 # Prints command traces
 set -x
 
 # Locale
-export LANGUAGE=en_US.UTF-8
-export LANG=en_US.UTF-8
-export LC_TYPE=en_US.UTF-8
-export LC_ALL=en_US.UTF-8
-locale-gen en_US en_US.UTF-8
+locale-gen --purge --no-archive
 dpkg-reconfigure locales
 
 # Set timezone
@@ -26,7 +26,8 @@ echo ${TIMEZONE} | sudo tee /etc/timezone && sudo dpkg-reconfigure --frontend no
 add-apt-repository ppa:chris-lea/redis-server
 
 # PhpMyAdmin repository
-add-apt-repository -y ppa:nijel/phpmyadmin
+# Broken on 12.05.2016. so disabled for now
+#add-apt-repository -y ppa:nijel/phpmyadmin
 
 # Nginx repository
 add-apt-repository -y ppa:nginx/stable
@@ -56,12 +57,31 @@ debconf-set-selections <<< 'phpmyadmin phpmyadmin/reconfigure-webserver multisel
 # Packages
 apt-get install -y htop nginx-full redis-server mysql-server-5.6 php5-cli php5-gd php5-curl \
 php5-mcrypt php5-fpm php5-intl php5-xsl php5-mysqlnd php5-cli php5-redis php5-xdebug \
-nfs-common phpmyadmin cachefilesd
+nfs-common phpmyadmin cachefilesd git
+
+# Add Varnish repository and install if required
+if [[ ${VARNISH} == 'Y' ]]; then
+    PAGE_CACHE_CONFIG='-varnish'
+
+    # Varnish repository
+    wget -q https://repo.varnish-cache.org/GPG-key.txt -O- | apt-key add -
+    add-apt-repository "deb https://repo.varnish-cache.org/ubuntu/ trusty varnish-3.0"
+
+    # Install varnish
+    apt-get install -y varnish
+
+    # Varnish daemon opts
+    cp /home/vagrant/public_html/vagrant/etc/default/varnish /etc/default/varnish
+
+    # Varnish .vcl file
+    cat /home/vagrant/public_html/vagrant/etc/varnish/vagrant.vcl \
+        | sed -e "s|{{DOMAIN}}|$DOMAIN|g" > /etc/varnish/vagrant.vcl
+fi
 
 # Bind MySQL to all interfaces (to allow connecting from host)
-cp /home/vagrant/public_html/vagrant/snippets/etc/mysql/conf.d/bind_all_interfaces.cnf /etc/mysql/conf.d/bind_all_interfaces.cnf
+cp /home/vagrant/public_html/vagrant/etc/mysql/conf.d/bind_all_interfaces.cnf /etc/mysql/conf.d/bind_all_interfaces.cnf
 
-# Create MySQL user and add procedure for truncating database
+# Create MySQL user
 mysql -P"3306" -h"localhost" -u"root" -p"root" -e "
 CREATE USER \"$MYSQL_USER\"@\"%\" IDENTIFIED WITH mysql_native_password;
 GRANT USAGE ON *.* TO \"$MYSQL_USER\"@\"%\" REQUIRE NONE WITH MAX_QUERIES_PER_HOUR 0 MAX_CONNECTIONS_PER_HOUR 0 MAX_UPDATES_PER_HOUR 0 MAX_USER_CONNECTIONS 0;
@@ -69,57 +89,19 @@ SET PASSWORD FOR \"$MYSQL_USER\"@\"%\" = PASSWORD(\"$MYSQL_PASSWORD\");
 CREATE DATABASE IF NOT EXISTS \`$MYSQL_DBNAME\`;
 GRANT ALL PRIVILEGES ON \`$MYSQL_DBNAME\`.* TO \"$MYSQL_USER\"@\"%\";
 GRANT ALL PRIVILEGES ON *.* TO \"root\"@\"%\" WITH GRANT OPTION;
-
-USE \`$MYSQL_DBNAME\`;
-DELIMITER //
-CREATE PROCEDURE dropAllTables()
-BEGIN
--- Temporary variable for the table name
-DECLARE tableName NVARCHAR(255);
--- Wheteher or not the cursor is finished looping over the table list
-DECLARE done INT DEFAULT FALSE;
--- A cursor over the table list read from the MySQL information schema database
-DECLARE tableCursor CURSOR FOR SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = (SELECT DATABASE());
--- Set up the error handler for breaking out of the loop reading the cursor
-DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
--- Disable foreign key checks
-SET FOREIGN_KEY_CHECKS = 0;
--- Open  the cursor
-OPEN tableCursor;
--- Start looping over the records in the cursor
-read_loop: LOOP
--- Read the next item into our tableName variable
-FETCH tableCursor INTO tableName;
--- If fecth failed (and the error handler set done), exit the loop
-IF done THEN
-  LEAVE read_loop;
-END IF;
--- Create the truncate query
-SET @s = CONCAT(\"DROP TABLE \", tableName);
--- Prepare, execute and deallocate the truncate query
-PREPARE dropStmt FROM @s;
-EXECUTE dropStmt;
-DEALLOCATE PREPARE dropStmt;
--- On to the next!
-END LOOP;
--- Close the cursor, all should be cleaned up now
-CLOSE tableCursor;
--- Enable foreign key checks
-SET FOREIGN_KEY_CHECKS = 1;
-END//
-DELIMITER ;
 "
-# PHP development mode
-cp /home/vagrant/public_html/vagrant/snippets/etc/php5/mods-available/development.ini /etc/php5/mods-available/development.ini
 
-cat /home/vagrant/public_html/vagrant/snippets/etc/php5/mods-available/development.ini \
+# PHP development mode
+cp /home/vagrant/public_html/vagrant/etc/php5/mods-available/development.ini /etc/php5/mods-available/development.ini
+
+cat /home/vagrant/public_html/vagrant/etc/php5/mods-available/development.ini \
  | sed -e "s|{{TIMEZONE}}|$TIMEZONE|g" > /etc/php5/mods-available/development.ini
 
 # Enable PHP modules
 php5enmod development mcrypt
 
 # PHP-FPM pool
-cp /home/vagrant/public_html/vagrant/snippets/etc/php5/fpm/pool.d/vagrant.conf /etc/php5/fpm/pool.d/vagrant.conf
+cp /home/vagrant/public_html/vagrant/etc/php5/fpm/pool.d/vagrant.conf /etc/php5/fpm/pool.d/vagrant.conf
 
 # Generate ssl certificate
 openssl req -new -newkey rsa:4096 -days 365 -nodes -x509 -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=$DOMAIN" \
@@ -128,24 +110,28 @@ openssl req -new -newkey rsa:4096 -days 365 -nodes -x509 -subj "/C=US/ST=Denial/
 # Generate dhparam
 openssl dhparam -out /etc/ssl/private/vagrant-dhparam.pem 2048 &> /dev/null
 
+# Make Nginx depend on Upstart vagrant-mounted event
+cp /home/vagrant/public_html/vagrant/etc/init/nginx.conf /etc/init/nginx.conf
+
 # Nginx snippets
-cp /home/vagrant/public_html/vagrant/snippets/etc/nginx/snippets/vagrant-ssl.inc /etc/nginx/snippets/vagrant-ssl.inc
+cp /home/vagrant/public_html/vagrant/etc/nginx/snippets/vagrant-ssl.conf /etc/nginx/snippets/vagrant-ssl.conf
+cp /home/vagrant/public_html/vagrant/etc/nginx/snippets/vagrant-main.conf /etc/nginx/snippets/vagrant-main.conf
 
 # Nginx virtualhosts
 rm /etc/nginx/sites-enabled/default
 
 # Phpmyadmin
-cat /home/vagrant/public_html/vagrant/snippets/etc/nginx/sites-available/phpmyadmin \
+cat /home/vagrant/public_html/vagrant/etc/nginx/sites-available/phpmyadmin${PAGE_CACHE_CONFIG} \
  | sed -e "s|{{DOMAIN}}|$DOMAIN|g" > /etc/nginx/sites-available/phpmyadmin
 ln -s /etc/nginx/sites-available/phpmyadmin /etc/nginx/sites-enabled/phpmyadmin
 
 # Magento 2
-cat /home/vagrant/public_html/vagrant/snippets/etc/nginx/sites-available/vagrant \
+cat /home/vagrant/public_html/vagrant/etc/nginx/sites-available/vagrant${PAGE_CACHE_CONFIG} \
  | sed -e "s|{{DOMAIN}}|$DOMAIN|g" > /etc/nginx/sites-available/vagrant
 ln -s /etc/nginx/sites-available/vagrant /etc/nginx/sites-enabled/vagrant
 
 # Sendmail
-cp /home/vagrant/public_html/vagrant/snippets/usr/sbin/sendmail /usr/sbin/sendmail && chmod +x /usr/sbin/sendmail
+cp /home/vagrant/public_html/vagrant/usr/sbin/sendmail /usr/sbin/sendmail && chmod +x /usr/sbin/sendmail
 
 # cachefilesd
 echo "RUN=yes" >> /etc/default/cachefilesd
@@ -153,11 +139,9 @@ echo "RUN=yes" >> /etc/default/cachefilesd
 # Add www-data user to vagrant group (support restrictive document root permission schemes - yes, Magento 2, you!)
 adduser www-data vagrant
 
-# Make Nginx depend on Upstart vagrant-mounted event
-sed -i -e "s|^\(start on.*\)|#\1\nstart on vagrant-mounted|g" /etc/init/nginx.conf
-
 # Restart services
 service cachefilesd restart
 service php5-fpm restart
 service nginx restart
+service varnish restart
 service mysql restart

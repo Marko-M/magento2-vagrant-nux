@@ -1,6 +1,6 @@
 # Magento 2 Vagrant for Unix based hosts
 
-This Vagrant environment was crafted to run best on Linux hosts. Due to mounting shares through NFSv4 to improve performance, Windows is not supported. Mac OS X hasn't been tested.
+This Vagrant environment was crafted to run best on Linux hosts. Due to mounting shares through NFSv4 to improve performance, Windows is not supported. Mac OS X hasn't been tested yet.
 
 ## Guest
 
@@ -9,10 +9,13 @@ This Vagrant environment was crafted to run best on Linux hosts. Due to mounting
  * Nginx 1.8
  * PHP-FPM 5.6
  * MySQL 5.6
+ * Varnish 3.0
  * Redis 3.0
  * phpMyAdmin
  * Fake /usr/sbin/sendmail (logs emails to $HOME/mail)
  * 2 cores, 2048 MB of RAM
+
+Varnish reverse proxy will not get installed by default, but it can be enabled before provisioning by setting `VARNISH = 'Y'` inside `Vagrantfile.local` configuration file.
  
 ## Host
  
@@ -50,10 +53,18 @@ This Vagrant environment can be adjusted by copying `Vagrantfile.local.sample` t
 ```ruby
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
-# Copy to Vagrantfile.local and modify
+
+# https://github.com/Marko-M/magento2-vagrant-nux
+# Marko Martinović (http://www.techytalk.info)
+
+# Copy into Vagrantfile.local and modify
 
 # Add "192.168.56.6 $DOMAIN phpmyadmin.$DOMAIN" to your host /etc/hosts
-DOMAIN = 'localhost.loc'
+DOMAIN = 'magento2.loc'
+TIMEZONE = 'America/Los_Angeles'
+
+# Install and configure Varnish
+VARNISH = 'N'
 
 # MySQL
 # Due to MySQL limitations, up to 16 characters here, more will get truncated
@@ -61,12 +72,8 @@ MYSQL_DBNAME = 'magento2'
 MYSQL_USER = 'magento2'
 MYSQL_PASSWORD = 'magento2'
 
-# PHP
-PHP_TIMEZONE = 'America/Los_Angeles'
-
 # Magento
 MAGENTO_INSTALL = 'Y'
-MAGENTO_TIMEZONE = 'America/Los_Angeles'
 MAGENTO_LANGUAGE = 'en_US'
 MAGENTO_CURRENCY = 'USD'
 MAGENTO_SAMPLE_DATA = 'Y'
