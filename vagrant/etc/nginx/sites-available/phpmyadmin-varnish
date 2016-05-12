@@ -1,0 +1,39 @@
+upstream phpmyadmin-www-data-backend {
+    server unix:/var/run/php5-fpm.sock;
+}
+
+server {
+    listen 8080;
+    listen [::]:8080;
+
+    server_name phpmyadmin.{{DOMAIN}};
+    root /usr/share/phpmyadmin;
+
+    error_log /var/log/nginx/phpmyadmin.error.log;
+    access_log /var/log/nginx/phpmyadmin.access.log;
+
+    location / {
+        index  index.php;
+    }
+
+    ## Images and static content is treated different
+    location ~* ^.+.(jpg|jpeg|gif|css|png|js|ico|xml)$ {
+        access_log        off;
+        expires           360d;
+    }
+
+    location ~ /\.ht {
+        deny  all;
+    }
+
+    location ~ /(libraries|setup/frames|setup/libs) {
+        deny all;
+        return 404;
+    }
+
+    location ~ \.php$ {
+        fastcgi_pass   phpmyadmin-www-data-backend;
+        include snippets/fastcgi-php.conf;
+        fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+    }
+}

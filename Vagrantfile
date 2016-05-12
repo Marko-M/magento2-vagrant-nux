@@ -14,14 +14,14 @@ DOMAIN ||= 'vagrant.loc'
 MYSQL_DBNAME ||= 'vagrant'
 MYSQL_USER ||= 'vagrant'
 MYSQL_PASSWORD ||= 'vagrant'
-MAGENTO_INSTALL ||= true
-MAGENTO_TIMEZONE ||= 'America/Los_Angeles'
+MAGENTO_INSTALL ||= 'Y'
 MAGENTO_LANGUAGE ||= 'en_US'
 MAGENTO_CURRENCY ||= 'USD'
 MAGENTO_SAMPLE_DATA ||= 'Y'
 AUTH_NAME ||= ''
 AUTH_PASS ||= ''
 TIMEZONE ||= 'America/Los_Angeles'
+VARNISH ||= 'N'
 
 Vagrant.configure(2) do |config|
     # Every Vagrant development environment requires a box. You can search for
@@ -125,20 +125,25 @@ Vagrant.configure(2) do |config|
             MYSQL_USER,         #3
             MYSQL_PASSWORD,     #4
             TIMEZONE,           #5
+            VARNISH,            #6
         ]
     end
 
-    if MAGENTO_INSTALL == 'Y'
+    if MAGENTO_INSTALL == 'Y' && AUTH_NAME != '' && AUTH_PASS != ''
         config.vm.provision "shell" do |s|
             s.path = "vagrant/install_magento.sh"
             s.args = [
-                MAGENTO_TIMEZONE,   #1
+                TIMEZONE,           #1
                 MAGENTO_LANGUAGE,   #2
                 MAGENTO_CURRENCY,   #3
                 MAGENTO_SAMPLE_DATA,#4
                 AUTH_NAME,          #5
                 AUTH_PASS,          #6
                 DOMAIN,             #7
+                VARNISH,            #8
+                MYSQL_DBNAME,       #9
+                MYSQL_USER,         #10
+                MYSQL_PASSWORD,     #11
             ]
             s.privileged = false
         end

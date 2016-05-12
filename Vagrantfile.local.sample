@@ -7,8 +7,11 @@
 # Copy into Vagrantfile.local and modify
 
 # Add "192.168.56.6 $DOMAIN phpmyadmin.$DOMAIN" to your host /etc/hosts
-DOMAIN = 'localhost.loc'
+DOMAIN = 'magento2.loc'
 TIMEZONE = 'America/Los_Angeles'
+
+# Install and configure Varnish
+VARNISH = 'N'
 
 # MySQL
 # Due to MySQL limitations, up to 16 characters here, more will get truncated
@@ -18,7 +21,6 @@ MYSQL_PASSWORD = 'magento2'
 
 # Magento
 MAGENTO_INSTALL = 'Y'
-MAGENTO_TIMEZONE = 'America/Los_Angeles'
 MAGENTO_LANGUAGE = 'en_US'
 MAGENTO_CURRENCY = 'USD'
 MAGENTO_SAMPLE_DATA = 'Y'
