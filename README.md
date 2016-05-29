@@ -12,8 +12,8 @@ This Vagrant environment was crafted to run best on Linux hosts. Due to mounting
  * Varnish 3.0
  * Redis 3.0
  * phpMyAdmin
- * Fake /usr/sbin/sendmail (logs emails to $HOME/mail)
- * 2 cores, 2048 MB of RAM
+ * Mailcatcher
+ * By default 2 cores, 2048 MB of RAM (configurable)
 
 Varnish reverse proxy will not get installed by default, but it can be enabled before provisioning by setting `VARNISH = 'Y'` inside `Vagrantfile.local` configuration file.
  
@@ -59,9 +59,16 @@ This Vagrant environment can be adjusted by copying `Vagrantfile.local.sample` t
 
 # Copy into Vagrantfile.local and modify
 
-# Add "192.168.56.6 $DOMAIN phpmyadmin.$DOMAIN" to your host /etc/hosts
+# Add "$IP $DOMAIN phpmyadmin.$DOMAIN" to your host /etc/hosts
 DOMAIN = 'magento2.loc'
 TIMEZONE = 'America/Los_Angeles'
+
+# Private network IP address
+IP = '192.168.56.6'
+
+# Hardware
+RAM = 2048
+CPU = 2
 
 # Install and configure Varnish
 VARNISH = 'N'
@@ -129,9 +136,16 @@ xdebug.remote_connect_back = on
 
 * Magento Frontend: `http://magento2.loc`
 * Magento Admin: `http://magento2.loc/admin`
-* phpMyAdmin: `http://phpmyadmin.magento2.loc`
 * Admin user: `magento2`
 * Admin password: `magento2`
 
 MAGE_MODE is set to developer.
+
+## phpMyAdmin
+
+* `http://phpmyadmin.magento2.loc`
+
+## Mailcatcher
+
+* `http://magento2.loc:1080`
 
