@@ -6,9 +6,16 @@
 
 # Copy into Vagrantfile.local and modify
 
-# Add "192.168.56.6 $DOMAIN phpmyadmin.$DOMAIN" to your host /etc/hosts
+# Add "$IP $DOMAIN phpmyadmin.$DOMAIN" to your host /etc/hosts
 DOMAIN = 'magento2.loc'
 TIMEZONE = 'America/Los_Angeles'
+
+# Private network IP address
+IP = '192.168.56.6'
+
+# Hardware
+RAM = 2048
+CPU = 2
 
 # Install and configure Varnish
 VARNISH = 'N'
