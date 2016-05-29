@@ -57,7 +57,7 @@ debconf-set-selections <<< 'phpmyadmin phpmyadmin/reconfigure-webserver multisel
 # Packages
 apt-get install -y htop nginx-full redis-server mysql-server-5.6 php5-cli php5-gd php5-curl \
 php5-mcrypt php5-fpm php5-intl php5-xsl php5-mysqlnd php5-cli php5-redis php5-xdebug \
-nfs-common phpmyadmin cachefilesd git
+nfs-common phpmyadmin cachefilesd git build-essential libsqlite3-dev ruby1.9.1-dev
 
 # Add Varnish repository and install if required
 if [[ ${VARNISH} == 'Y' ]]; then
@@ -130,14 +130,25 @@ cat /home/vagrant/public_html/vagrant/etc/nginx/sites-available/vagrant${PAGE_CA
  | sed -e "s|{{DOMAIN}}|$DOMAIN|g" > /etc/nginx/sites-available/vagrant
 ln -s /etc/nginx/sites-available/vagrant /etc/nginx/sites-enabled/vagrant
 
-# Sendmail
-cp /home/vagrant/public_html/vagrant/usr/sbin/sendmail /usr/sbin/sendmail && chmod +x /usr/sbin/sendmail
-
 # cachefilesd
 echo "RUN=yes" >> /etc/default/cachefilesd
 
 # Add www-data user to vagrant group (support restrictive document root permission schemes - yes, Magento 2, you!)
 adduser www-data vagrant
+
+# Install Mailcatcher
+gem install mime-types --version "< 3" 2>/dev/null
+gem install --conservative mailcatcher 2>/dev/null
+
+# Adjust PHP for Mailcatcher
+cp /home/vagrant/public_html/vagrant/etc/php5/mods-available/mailcatcher.ini /etc/php5/mods-available/mailcatcher.ini
+php5enmod mailcatcher
+
+# Upstart service
+cp /home/vagrant/public_html/vagrant/etc/init/mailcatcher.conf /etc/init/mailcatcher.conf
+
+# Start Mailcatcher
+service mailcatcher start
 
 # Restart services
 service cachefilesd restart
