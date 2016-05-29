@@ -32,7 +32,7 @@ add-apt-repository ppa:chris-lea/redis-server
 # Nginx repository
 add-apt-repository -y ppa:nginx/stable
 
-# PHP 5.5 repository
+# PHP 5.6 repository
 add-apt-repository -y ppa:ondrej/php5-5.6
 
 # Update package information

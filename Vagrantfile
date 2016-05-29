@@ -11,6 +11,9 @@ end
 
 # Defaults
 DOMAIN ||= 'vagrant.loc'
+IP ||= '192.168.56.6'
+RAM ||= '2048'
+CPU ||= '2'
 MYSQL_DBNAME ||= 'vagrant'
 MYSQL_USER ||= 'vagrant'
 MYSQL_PASSWORD ||= 'vagrant'
@@ -37,7 +40,7 @@ Vagrant.configure(2) do |config|
     config.vm.hostname = DOMAIN
 
     # Private network due to NFS
-    config.vm.network "private_network", ip: "192.168.56.6"
+    config.vm.network "private_network", ip: IP
 
     nfs_mount_options = [
         "auto",
@@ -90,9 +93,9 @@ Vagrant.configure(2) do |config|
     #   vb.gui = true
     #
     # Customize the amount of memory on the VM:
-    vb.customize ["modifyvm", :id, "--memory", "2048"]
+    vb.customize ["modifyvm", :id, "--memory", RAM]
     # Customize the number of CPUs on the VM:
-    vb.customize ["modifyvm", :id, "--cpus", "2"]
+    vb.customize ["modifyvm", :id, "--cpus", CPU]
 
     # Required for 64 bit guest
     vb.customize ["modifyvm", :id, "--ioapic", "on"]
