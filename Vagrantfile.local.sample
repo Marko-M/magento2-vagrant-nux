@@ -34,4 +34,4 @@ MAGENTO_SAMPLE_DATA = 'Y'
 
 # Composer auth (required if MAGENTO_INSTALL == 'Y')
 AUTH_NAME = ''
-AUTH_PASSWORD = ''
+AUTH_PASS = ''
