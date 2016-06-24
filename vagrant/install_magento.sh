@@ -28,8 +28,13 @@ php -r "readfile('https://getcomposer.org/installer');" > composer-setup.php
 php -f composer-setup.php -- --install-dir=$HOME/bin --filename=composer
 php -r "unlink('composer-setup.php');"
 
+# Add GitHub to the list of known_hosts for Git&Composer
+mkdir -p ~/.ssh && touch ~/.ssh/known_hosts \
+&& ssh-keyscan -H github.com >> ~/.ssh/known_hosts \
+&& chmod 600 ~/.ssh/known_hosts
+
 # Setup global auth.json
-~/bin/composer config -g http-basic.repo.magento.com $AUTH_NAME $AUTH_PASS
+~/bin/composer config -g http-basic.repo.magento.com $AUTH_NAME $AUTH_PASS --no-interaction
 
 # Link global auth.json to framework composer home (required for sample data)
 if [[ -f "$HOME/.composer/auth.json" ]]; then
@@ -37,7 +42,7 @@ if [[ -f "$HOME/.composer/auth.json" ]]; then
 fi
 
 # Install composer dependencies
-~/bin/composer install
+~/bin/composer install --no-interaction
 
 # Handle sample data
 if [[ ${MAGENTO_SAMPLE_DATA} == 'Y' ]]; then
