@@ -13,7 +13,7 @@ server {
     listen 8080 default_server;
     listen [::]:8080 default_server;
 
-    server_name magento2.loc;
+    server_name {{DOMAIN}};
 
     set $MAGE_ROOT /home/vagrant/public_html;
     set $MAGE_MODE developer;
@@ -29,7 +29,7 @@ server {
     listen 443;
     listen [::]:443;
 
-    server_name magento2.loc;
+    server_name {{DOMAIN}};
 
     error_log /var/log/nginx/vagrant.443.error.log;
     access_log /var/log/nginx/vagrant.443.access.log;
